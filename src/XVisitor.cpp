@@ -25,9 +25,9 @@ antlrcpp::Any XVisitor::visitEvent(XiangParser::EventContext *ctx) {
 }
 
 antlrcpp::Any XVisitor::visitExpression(XiangParser::ExpressionContext *ctx) {
-    if(ctx->children.size() == 1){
+    if(ctx->children.size() == 1 || ctx->inner){
         if(ctx->inner) { // parentheses
-            return visitExpression(dynamic_cast<XiangParser::ExpressionContext *>(ctx->children.front()));
+            return visitExpression(dynamic_cast<XiangParser::ExpressionContext *>(ctx->children[1]));
         } else {
             // this is a signal
             return visitSignal(dynamic_cast<XiangParser::SignalContext *>(ctx->children.front()));
