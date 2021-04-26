@@ -13,8 +13,9 @@ class  XiangParser : public antlr4::Parser {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, Identifier = 7, 
-    StringLiteral = 8, Mul = 9, Div = 10, Add = 11, Minus = 12, And = 13, 
-    Or = 14, Equal = 15, NotEqual = 16, WS = 17
+    StringLiteral = 8, Constant = 9, Mul = 10, Div = 11, Add = 12, Minus = 13, 
+    And = 14, Or = 15, Equal = 16, NotEqual = 17, Not = 18, Reverse = 19, 
+    BitAnd = 20, BitOr = 21, WS = 22
   };
 
   enum {
@@ -73,6 +74,8 @@ public:
     virtual size_t getRuleIndex() const override;
     std::vector<ExpressionContext *> expression();
     ExpressionContext* expression(size_t i);
+    antlr4::tree::TerminalNode *Not();
+    antlr4::tree::TerminalNode *Reverse();
     SignalContext *signal();
     antlr4::tree::TerminalNode *Mul();
     antlr4::tree::TerminalNode *Div();
@@ -82,6 +85,8 @@ public:
     antlr4::tree::TerminalNode *NotEqual();
     antlr4::tree::TerminalNode *And();
     antlr4::tree::TerminalNode *Or();
+    antlr4::tree::TerminalNode *BitAnd();
+    antlr4::tree::TerminalNode *BitOr();
 
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
@@ -96,6 +101,7 @@ public:
     virtual size_t getRuleIndex() const override;
     Instance_pathContext *instance_path();
     antlr4::tree::TerminalNode *Identifier();
+    antlr4::tree::TerminalNode *Constant();
 
 
     virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
