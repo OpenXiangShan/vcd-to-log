@@ -110,5 +110,3 @@ int main(int argc, char **argv) {
     delete(xVisitor);
     return 0;
 }
-//"/home/lx/work/vcd/vcd-to-log/examples/TESTFILE/dump.xiang"
-//"/home/lx/work/vcd/vcd-to-log/examples/TESTFILE/dump.vcd"
