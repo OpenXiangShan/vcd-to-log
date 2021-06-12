@@ -53,6 +53,10 @@ class Trace {
 
         std::vector<VCDTime>* get_timestamps();
 
+        std::vector<VCDSignal *>* get_all_signals() {
+            return trace->get_signals();
+        }
+
         static VCDSignal* get_scope_signal(VCDScope* scope, VCDSignalReference& name){
             for(auto signal : scope->signals){
                 if(signal->reference == name) return signal;

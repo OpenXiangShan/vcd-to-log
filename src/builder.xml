@@ -1,0 +1,35 @@
+<interface>
+    <object class="GtkWindow" id="window">
+        <property name="title" translatable="yes">Example Application</property>
+        <property name="default-width">600</property>
+        <property name="default-height">400</property>
+        <property name="visible">True</property>
+        <child>
+            <object class="GtkBox" id="content_box">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                    <object class="GtkSearchBar" id="searchbar">
+                        <property name="visible">True</property>
+                        <child>
+                            <object class="GtkSearchEntry" id="searchentry">
+                                <property name="visible">True</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkScrolledWindow" id="textwindow">
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <child>
+                            <object class="GtkTextView" id="textview">
+                                <property name="editable">False</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>
