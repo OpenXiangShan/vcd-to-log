@@ -14,6 +14,7 @@ class Trace {
         const char* file{};
         VCDFileParser parser;
         VCDFile* trace{};
+        std::map<VCDScope *, std::string> name_map;
 
         static void split_path(StrPath& sp, VecPath& vp, const std::string& delimiters = "."){
             StrPath::size_type lastPos = sp.find_first_not_of(delimiters, 0);
@@ -25,6 +26,14 @@ class Trace {
             }
         }
 
+        void visit_all_scope(VCDScope *cur, std::string &path) {
+            for(auto child : cur->children){
+                std::string new_path = path.empty() ? child->name : path + "." + child->name;
+                name_map[child] = new_path;
+                visit_all_scope(child, new_path);
+            }
+        }
+
     public:
         explicit Trace(const char* file):file(file)
         {
@@ -33,10 +42,16 @@ class Trace {
                 std::cerr << "Can't parse file " << file << std::endl;
                 exit(-1);
             }
+            std::string empty;
+            visit_all_scope(trace->root_scope->children[0], empty);
         }
 
         ~Trace(){
             delete trace;
+        }
+
+        std::string get_full_name(VCDScope *scope) {
+            return name_map[scope];
         }
 
         VCDScope* get_scope_by_path(StrPath& path);
@@ -56,6 +71,10 @@ class Trace {
         std::vector<VCDSignal *>* get_all_signals() {
             return trace->get_signals();
         }
+
+        VCDScope *get_root_scope() {
+            return trace->root_scope;
+        };
 
         static VCDSignal* get_scope_signal(VCDScope* scope, VCDSignalReference& name){
             for(auto signal : scope->signals){
