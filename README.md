@@ -2,7 +2,7 @@
 
 ## Compile
 
-> mkdir build
+> mkdir build && cd build
 
 > cmake ..
 
@@ -18,4 +18,4 @@
 
 > cd build/src
 
-> ./vcd-to-log -c <path-to-*.xiang-file> -t <path-to-*.vcd-file>
+> ./vcd-to-log -c <path-to-\*.xiang-file> -t <path-to-\*.vcd-file>
