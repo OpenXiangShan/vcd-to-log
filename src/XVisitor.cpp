@@ -36,7 +36,9 @@ antlrcpp::Any XVisitor::visitExpression(XiangParser::ExpressionContext *ctx) {
         auto *lexp = dynamic_cast<XiangParser::ExpressionContext *>(ctx->children[0]);
         auto *rexp = dynamic_cast<XiangParser::ExpressionContext *>(ctx->children[2]);
         VCDValue* lv = visitExpression(lexp);
+        assert(lv);
         VCDValue* rv = visitExpression(rexp);
+        assert(rv);
         VCDValue* res;
         
         switch (ctx->op->getType()) {
@@ -130,7 +132,6 @@ const static std::vector<std::string> OctMap = {
 
 antlrcpp::Any XVisitor::visitSignal(XiangParser::SignalContext *ctx) {
     StrPath signalPath = ctx->getText();
-    // std::cout << signalPath << std::endl;
     //handle constants
     if(signalPath[0] == '0' && signalPath[1] == 'x')
     {
@@ -283,6 +284,7 @@ antlrcpp::Any XVisitor::visitSignal(XiangParser::SignalContext *ctx) {
         VCDSignal* sig = trace->get_signal_by_path(signalPath);
         assert(sig && "Signal can't be found!");
         VCDValue* v = trace->get_signal_value_at(sig->hash, time);
+        assert(v && "Value is null!");
         return v;
     }
 }

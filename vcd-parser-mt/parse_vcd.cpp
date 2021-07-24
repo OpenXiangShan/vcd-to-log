@@ -232,7 +232,7 @@ VCDFile *parse_vcd(const char *fpath) {
                 scope = scope->parent;
                 break;
             case T_DUMPVARS:
-                skip_until_end(); // initial value not supported now
+//                skip_until_end();
                 break;
             case T_STRING:
                 parse_string(vcd, str);

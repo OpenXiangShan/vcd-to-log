@@ -62,6 +62,7 @@ bool VCDValue::asBool() const {
 }
 
 VCDBit VCDValue::asBit() const {
+    assert(this);
     if(this->type == VCD_SCALAR){
         return this->value.val_bit;
     } else if (this->type == VCD_VECTOR){

@@ -7,22 +7,19 @@ VCDScope* Trace::get_scope_by_path(StrPath& path){
 }
 
 VCDScope* Trace::get_scope_by_path(VecPath& path){
-    VCDScope* scope = trace->get_scope("TOP");
-    bool find = false;
+    VCDScope *scope = nullptr;
     for(auto& s : path){
-        for(auto child : scope->children){
+        for(auto child : *trace->get_scopes()){
             if(s == child->name){
                 scope = child;
-                find = true;
                 break;
             }
         }
-        if(!find){
+        if(!scope){
             std::cout << "scope[" << s << "] not found!" << std::endl;
             scope = nullptr;
             break;
         }
-        find = false;
     }
     return scope;
 }
