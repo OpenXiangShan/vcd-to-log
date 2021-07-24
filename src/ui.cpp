@@ -7,31 +7,29 @@
 
 #include "Trace.h"
 
-typedef struct SelHeirData {
-    GtkStack *sig_stack;
-    GtkEntryCompletion *completion;
-} SelHeirData;
+static GtkBuilder *builder;
+static GObject *window;
+static GObject *menu_bar;
 
-typedef struct MatchSelData {
-    GtkTextBuffer *text_buffer;
-    GtkSearchBar *search_bar;
-    GtkWindow *window;
-    GtkWidget *focus;
-} MatchSelData;
+static GObject *search_bar;
+static GObject *search_entry;
 
-typedef struct InvokeSearchData {
-    GtkSearchBar *search_bar;
-    GtkWindow *window;
-    GtkWidget *focus;
-} InvokeSearchData;
+static GtkEntryCompletion *completion;
+static GtkTreeModel *heir_model;
+static GtkWidget *heir_view;
+static GtkCellRenderer *renderer;
+static GObject *sig_stack;
+static GObject *heir_window;
 
-typedef struct StopSearchCbData {
-    GtkSearchBar *search_bar;
-    GtkWindow *window;
-    GtkWidget *focus;
-} StopSearchCbData;
+static GObject *text_window;
+static GObject *text_view;
+static GtkTextBuffer *buffer;
 
-void append_tree_iter(Trace *trace, GtkTreeStore *model, GtkTreeIter *iter, VCDScope *scope, GtkStack *stack) {
+static GError *error = NULL;
+
+static GFile *xiang_file;
+
+static void append_tree_iter(Trace *trace, GtkTreeStore *model, GtkTreeIter *iter, VCDScope *scope, GtkStack *stack) {
     static int cnt = 0;
     std::string full_name = trace->get_full_name(scope);
 
@@ -73,7 +71,7 @@ void append_tree_iter(Trace *trace, GtkTreeStore *model, GtkTreeIter *iter, VCDS
     }
 }
 
-GtkTreeModel *create_model(Trace *trace, GtkStack *stack){
+static GtkTreeModel *create_model(Trace *trace, GtkStack *stack){
     GtkTreeStore *model;
     VCDScope *scope;
     model = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
@@ -83,17 +81,13 @@ GtkTreeModel *create_model(Trace *trace, GtkStack *stack){
     return GTK_TREE_MODEL(model);
 }
 
-gboolean select_heir(
+static gboolean select_heir(
         GtkTreeSelection *selection,
         GtkTreeModel *model,
         GtkTreePath *path,
         gboolean path_current_selected,
         gpointer data
         ){
-
-    SelHeirData *m_data;
-    GtkStack *sig_stack;
-    GtkEntryCompletion *completion;
 
     GtkTreeIter iter;
     gchar *name;
@@ -107,15 +101,11 @@ gboolean select_heir(
         if(path_current_selected){
             g_print("will unselect %s[%s]\n", name, full_name);
         } else {
-            m_data = reinterpret_cast<SelHeirData *>(data);
-            sig_stack = m_data->sig_stack;
-            completion = m_data->completion;
-            assert(completion);
             g_print("will select %s[%s]\n", name, full_name);
             // change visible child
-            gtk_stack_set_visible_child_name(sig_stack, full_name);
+            gtk_stack_set_visible_child_name(GTK_STACK(sig_stack), full_name);
             // change search entry completion
-            sw = reinterpret_cast<GtkScrolledWindow *>(gtk_stack_get_visible_child(sig_stack));
+            sw = reinterpret_cast<GtkScrolledWindow *>(gtk_stack_get_visible_child(GTK_STACK(sig_stack)));
             GList *list = gtk_container_get_children(GTK_CONTAINER(sw));
             sig_view = GTK_TREE_VIEW(list->data);
             sig_model = gtk_tree_view_get_model(sig_view);
@@ -135,10 +125,6 @@ static gboolean match_selected_cb(
         GtkTreeIter *iter,
         gpointer data
         ) {
-    MatchSelData *m_data;
-    GtkTextBuffer *text_buffer;
-    GtkTextIter text_iter;
-    GtkSearchBar *search_bar;
     gchar *name;
     gchar *full_name;
     GtkEntry *entry;
@@ -146,64 +132,99 @@ static gboolean match_selected_cb(
     g_print("match\n");
     gtk_tree_model_get(model, iter, 0, &name, 1, &full_name, -1);
 
-
-    m_data = reinterpret_cast<MatchSelData *>(data);
-    text_buffer = m_data->text_buffer;
-    search_bar = m_data->search_bar;
-
-//    gtk_search_bar_set_search_mode(search_bar, false);
     entry = GTK_ENTRY(gtk_entry_completion_get_entry(completion));
     gtk_entry_set_text(entry, "");
 
-    gtk_text_buffer_insert_at_cursor(text_buffer, full_name, strlen(full_name));
-//    gtk_text_buffer_get_end_iter(text_buffer, &text_iter);
-//    gtk_text_buffer_place_cursor(text_buffer, &text_iter);
+    gtk_text_buffer_insert_at_cursor(buffer, full_name, strlen(full_name));
 
-    gtk_window_set_focus(GTK_WINDOW(m_data->window), GTK_WIDGET(m_data->focus));
+    gtk_window_set_focus(GTK_WINDOW(window), GTK_WIDGET(text_view));
     g_free(full_name);
     return true;
 }
 
 static void invoke_search_cb(GtkWidget *widget, gpointer data){
     g_print("invoke search\n");
-    InvokeSearchData *m_data = reinterpret_cast<InvokeSearchData *>(data);
-    gtk_search_bar_set_search_mode(m_data->search_bar, true);
-    gtk_window_set_focus(m_data->window, m_data->focus);
+    gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), true);
+    gtk_window_set_focus(GTK_WINDOW(window), GTK_WIDGET(search_entry));
 }
 
 static void stop_search_cb(GtkSearchEntry *entry, gpointer data){
     gtk_entry_set_text(GTK_ENTRY(entry), "");
-    StopSearchCbData *m_data = reinterpret_cast<StopSearchCbData *>(data);
-    gtk_search_bar_set_search_mode(m_data->search_bar, true);
-    gtk_window_set_focus(m_data->window, m_data->focus);
+    gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), true);
+    gtk_window_set_focus(GTK_WINDOW(window), GTK_WIDGET(text_view));
+}
+
+static void open_file(GtkMenuItem *item, gpointer data){
+    GtkWidget *dialog;
+    dialog = gtk_file_chooser_dialog_new(
+            "Open",
+            GTK_WINDOW(window),
+            GTK_FILE_CHOOSER_ACTION_OPEN,
+            "_Cancel",
+            GTK_RESPONSE_CANCEL,
+            "_Open",
+            GTK_RESPONSE_ACCEPT,
+            NULL
+    );
+    gint res = gtk_dialog_run(GTK_DIALOG(dialog));
+    if(res == GTK_RESPONSE_ACCEPT){
+        gchar *basename, *contents;
+        gsize len;
+        xiang_file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dialog));
+        basename = g_file_get_basename(xiang_file);
+        if(g_file_load_contents(xiang_file, NULL, &contents, &len, NULL, NULL)){
+            gtk_text_buffer_set_text(buffer, contents, len);
+            g_free(contents);
+        }
+        g_free(basename);
+    }
+    gtk_widget_destroy(dialog);
+}
+
+static void save_file(GtkMenuItem *item, gpointer data){
+    GtkWidget *dialog;
+    GtkFileChooser *chooser;
+    dialog = gtk_file_chooser_dialog_new(
+            "Save File",
+            GTK_WINDOW(window),
+            GTK_FILE_CHOOSER_ACTION_SAVE,
+            "_Cancel",
+            GTK_RESPONSE_CANCEL,
+            "_Save",
+            GTK_RESPONSE_ACCEPT,
+            NULL
+    );
+    chooser = GTK_FILE_CHOOSER(dialog);
+    gtk_file_chooser_set_do_overwrite_confirmation(chooser, TRUE);
+    if(xiang_file){
+        gchar *basename = g_file_get_basename(xiang_file);
+        gtk_file_chooser_set_filename(chooser, basename);
+        g_free(basename);
+    }
+    gint res = gtk_dialog_run(GTK_DIALOG(dialog));
+    if(res == GTK_RESPONSE_ACCEPT){
+        gchar *file_name, *contents;
+        GtkTextIter start, end;
+        file_name = gtk_file_chooser_get_filename(chooser);
+        gtk_text_buffer_get_start_iter(buffer, &start);
+        gtk_text_buffer_get_end_iter(buffer, &end);
+        contents = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        g_file_set_contents(file_name, contents, -1, NULL);
+    }
+    gtk_widget_destroy(dialog);
 }
 
 
 int main(int argc, char **argv){
-    GtkBuilder *builder;
 
-    GObject *window;
+    if(argc != 2){
+        g_print("usage: %s <path-to-vcd-file>\n", argv[0]);
+        return -1;
+    }
 
-    GObject *menu_bar;
-    GObject *search_bar;
-    GObject *search_entry;
+    char *vcd_path = argv[1];
 
-    GtkEntryCompletion *completion;
-    GtkTreeModel *heir_model;
-    GtkWidget *heir_view;
-    GtkCellRenderer *renderer;
-    GObject *sig_stack;
-    GObject *heir_window;
-
-    GObject *text_window;
-    GObject *text_view;
-    GtkTextBuffer *buffer;
-
-    GError *error = NULL;
-
-    char *vcd_path = "/home/ljw/project/XiangShan/test_run_dir/should_pass/Soc.vcd";
-
-    char *builder_path = "/home/ljw/project/vcd-to-log/src/builder.xml";
+    char *builder_path = "../../src/builder.xml";
 
     Trace* trace;
     trace = new Trace(vcd_path);
@@ -222,24 +243,15 @@ int main(int argc, char **argv){
     window = gtk_builder_get_object(builder, "window");
 
     menu_bar = gtk_builder_get_object(builder, "menu_bar");
-    GtkWidget *dialog;
-    dialog = gtk_file_chooser_dialog_new(
-            "Open",
-            GTK_WINDOW(window),
-            GTK_FILE_CHOOSER_ACTION_OPEN,
-            "_Cancel",
-            GTK_RESPONSE_CANCEL,
-            "_Open",
-            GTK_RESPONSE_ACCEPT,
-            NULL
-            );
-//    gint res = gtk_dialog_run(GTK_DIALOG(dialog));
-//    if(res == GTK_RESPONSE_ACCEPT){
-//        char *fname;
-//        fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-//        g_print("fname: %s\n", fname);
-//    }
-//    gtk_widget_destroy(dialog);
+
+    GtkMenuItem *open_file_button;
+    open_file_button = GTK_MENU_ITEM(gtk_builder_get_object(builder, "open_file"));
+    GtkMenuItem *save_file_button;
+    save_file_button = GTK_MENU_ITEM(gtk_builder_get_object(builder, "save_file"));
+
+    g_signal_connect(open_file_button, "activate", G_CALLBACK(open_file), NULL);
+    g_signal_connect(save_file_button, "activate", G_CALLBACK(save_file), NULL);
+
 
     search_bar = gtk_builder_get_object(builder, "searchbar");
     search_entry = gtk_builder_get_object(builder, "search_entry");
@@ -254,7 +266,6 @@ int main(int argc, char **argv){
 
     // init text window
     buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-    gtk_text_buffer_set_text(buffer, "abc", 3);
 
     // init search bar
     gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), true);
@@ -272,31 +283,23 @@ int main(int argc, char **argv){
             );
     gtk_container_add(GTK_CONTAINER(heir_window), heir_view);
 
-    gtk_stack_set_visible_child_name(GTK_STACK(sig_stack), "LazyModule");
-
     completion = gtk_entry_completion_new();
     gtk_entry_set_completion(GTK_ENTRY(search_entry), completion);
     gtk_entry_completion_set_model(completion, NULL);
     gtk_entry_completion_set_text_column(completion, 0);
     gtk_entry_completion_set_minimum_key_length(completion, 1);
-    MatchSelData match_data = {
-            .text_buffer = buffer,
-            .search_bar = GTK_SEARCH_BAR(search_bar),
-            .window = GTK_WINDOW(window),
-            .focus = GTK_WIDGET(text_view)
-    };
+
     g_signal_connect(
             completion,
             "match-selected",
             G_CALLBACK(match_selected_cb),
-            &match_data);
+            NULL);
 
-    SelHeirData sel_data = {.sig_stack = GTK_STACK(sig_stack), .completion = completion};
     GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(heir_view));
     gtk_tree_selection_set_select_function(
             selection,
             select_heir,
-            &sel_data,
+            NULL,
             NULL);
 
     g_signal_new(
@@ -323,24 +326,17 @@ int main(int argc, char **argv){
             GTK_ACCEL_VISIBLE
             );
 
-    InvokeSearchData inv_data = {
-            .search_bar = GTK_SEARCH_BAR(search_bar),
-            .window = GTK_WINDOW(window),
-            .focus = GTK_WIDGET(search_entry)
-    };
-
     g_signal_connect(
             GTK_WIDGET(text_view),
             "invoke-search",
             G_CALLBACK(invoke_search_cb),
-            &inv_data);
+            NULL);
 
-    StopSearchCbData stop_data = {.search_bar = GTK_SEARCH_BAR(search_bar), .window = GTK_WINDOW(window), .focus = GTK_WIDGET(text_view)};
     g_signal_connect(
             search_entry,
             "stop-search",
             G_CALLBACK(stop_search_cb),
-            &stop_data
+            NULL
             );
 
     gtk_widget_show_all(GTK_WIDGET(text_window));
