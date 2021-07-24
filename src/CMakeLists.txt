@@ -4,10 +4,11 @@ add_executable(vcd-to-log
         Trace.h
         XVisitor.cpp
         XVisitor.h)
-add_dependencies(vcd-to-log verilog-vcd-parser xiang-parser)
+add_dependencies(vcd-to-log verilog-vcd-parser xiang-parser vcd-parser-mt)
 target_link_libraries(vcd-to-log
         verilog-vcd-parser
         xiang-parser
+        vcd-parser-mt
         )
 
 find_package(PkgConfig REQUIRED)
@@ -18,9 +19,6 @@ add_executable(xiang-editor
         Trace.h
         XVisitor.h
         XVisitor.cpp)
-add_dependencies(xiang-editor verilog-vcd-parser xiang-parser)
+add_dependencies(xiang-editor verilog-vcd-parser xiang-parser vcd-parser-mt)
 target_include_directories(xiang-editor PUBLIC ${GTK3_INCLUDE_DIRS})
-target_link_libraries(xiang-editor verilog-vcd-parser xiang-parser ${GTK3_LIBRARIES})
-
-
-
+target_link_libraries(xiang-editor verilog-vcd-parser xiang-parser vcd-parser-mt ${GTK3_LIBRARIES})

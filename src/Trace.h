@@ -1,6 +1,7 @@
-#include "VCDFileParser.hpp"
+#include <iostream>
 #include "VCDFile.hpp"
 #include "VCDValue.hpp"
+#include "parse_vcd.h"
 
 #ifndef __TRACE_HPP__
 #define __TRACE_HPP__
@@ -12,7 +13,6 @@ typedef std::vector<std::string> VecPath;
 class Trace {
     private:
         const char* file{};
-        VCDFileParser parser;
         VCDFile* trace{};
         std::map<VCDScope *, std::string> name_map;
 
@@ -37,7 +37,8 @@ class Trace {
     public:
         explicit Trace(const char* file):file(file)
         {
-            trace = parser.parse_file(file);
+//            trace = parser.parse_file(file);
+            trace = parse_vcd(file);
             if(trace == nullptr){
                 std::cerr << "Can't parse file " << file << std::endl;
                 exit(-1);
