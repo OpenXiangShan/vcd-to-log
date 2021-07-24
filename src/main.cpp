@@ -85,7 +85,6 @@ int main(int argc, char **argv) {
     // parse vcd waveform
     std::string trace_file = *(args->getWavePath());
     auto *trace = new Trace(trace_file.c_str());
-    std::cout << "Parse waveform success!" << std::endl;
 
 
     // parse *.xiang file
@@ -96,15 +95,15 @@ int main(int argc, char **argv) {
     XiangLexer lexer(&inputStream);
     antlr4::CommonTokenStream tokenStream(&lexer);
     XiangParser parser(&tokenStream);
-    std::cout << "Parse .xiang file success!" << std::endl;
 
     // create visitor
     auto *xVisitor = new XVisitor(trace);
-    std::cout << (*trace->get_timestamps()).size() << std::endl;
-    std::cout << (trace->get_timestamps() == nullptr) << std::endl;
     auto tree = parser.main();
     for(VCDTime t : *trace->get_timestamps()){
         xVisitor->set_time(t);
+        if((int)t % 2 == 0){
+            continue;
+        }
         xVisitor->visitMain(tree);
     }
     delete(xVisitor);

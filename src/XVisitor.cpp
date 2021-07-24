@@ -19,7 +19,7 @@ XVisitor::~XVisitor(){
 antlrcpp::Any XVisitor::visitEvent(XiangParser::EventContext *ctx) {
     VCDValue* result = visitExpression(ctx->expression());
     if(result->asBool()){
-        std::cout << "[time = " << time << "] " << ctx->StringLiteral()->getText() << std::endl;
+        std::cout << "[cycle = " << (int)(time/2) << "] " << ctx->StringLiteral()->getText() << std::endl;
     }
     return nullptr;
 }

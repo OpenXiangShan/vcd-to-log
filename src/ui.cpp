@@ -201,14 +201,18 @@ int main(int argc, char **argv){
 
     GError *error = NULL;
 
+    char *vcd_path = "/home/ljw/project/XiangShan/test_run_dir/should_pass/Soc.vcd";
+
+    char *builder_path = "/home/ljw/project/vcd-to-log/src/builder.xml";
+
     Trace* trace;
-    trace = new Trace("/home/lin/Documents/vcd-to-log/examples/LazyModule.vcd");
+    trace = new Trace(vcd_path);
     assert(trace);
 
     gtk_init(&argc, &argv);
 
     builder = gtk_builder_new();
-    if(gtk_builder_add_from_file(builder, "/home/lin/Documents/vcd-to-log/src/builder.xml", &error) == 0){
+    if(gtk_builder_add_from_file(builder, builder_path, &error) == 0){
         g_printerr("error: %s\n", error->message);
         g_clear_error(&error);
         return 1;
@@ -229,13 +233,13 @@ int main(int argc, char **argv){
             GTK_RESPONSE_ACCEPT,
             NULL
             );
-    gint res = gtk_dialog_run(GTK_DIALOG(dialog));
-    if(res == GTK_RESPONSE_ACCEPT){
-        char *fname;
-        fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        g_print("fname: %s\n", fname);
-    }
-    gtk_widget_destroy(dialog);
+//    gint res = gtk_dialog_run(GTK_DIALOG(dialog));
+//    if(res == GTK_RESPONSE_ACCEPT){
+//        char *fname;
+//        fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+//        g_print("fname: %s\n", fname);
+//    }
+//    gtk_widget_destroy(dialog);
 
     search_bar = gtk_builder_get_object(builder, "searchbar");
     search_entry = gtk_builder_get_object(builder, "search_entry");
