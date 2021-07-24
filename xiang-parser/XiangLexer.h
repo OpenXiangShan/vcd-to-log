@@ -13,8 +13,9 @@ class  XiangLexer : public antlr4::Lexer {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, Identifier = 7, 
-    StringLiteral = 8, Mul = 9, Div = 10, Add = 11, Minus = 12, And = 13, 
-    Or = 14, Equal = 15, NotEqual = 16, WS = 17
+    StringLiteral = 8, Constant = 9, Mul = 10, Div = 11, Add = 12, Minus = 13, 
+    And = 14, Or = 15, Equal = 16, NotEqual = 17, Not = 18, Reverse = 19, 
+    BitAnd = 20, BitOr = 21, WS = 22
   };
 
   explicit XiangLexer(antlr4::CharStream *input);

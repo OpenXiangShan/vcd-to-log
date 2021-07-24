@@ -72,6 +72,7 @@ class VCDValue {
 
     bool asBool() const;
     VCDBit asBit() const;
+    static VCDBitVector* Reverse(VCDBitVector* in_vector);
     VCDValue* operator*(const VCDValue& that) const;
     VCDValue* operator/(const VCDValue& that) const;
     VCDValue* operator+(const VCDValue& that) const;
@@ -79,7 +80,10 @@ class VCDValue {
     VCDValue* operator==(const VCDValue& that) const;
     VCDValue* operator!=(const VCDValue& that) const;
     VCDValue* operator&&(const VCDValue& that) const;
+    VCDValue* operator&(const VCDValue& that) const;
     VCDValue* operator||(const VCDValue& that) const;
+    VCDValue* operator|(const VCDValue& that) const;
+    
 
     protected:
 
