@@ -22,6 +22,3 @@ add_executable(xiang-editor
 add_dependencies(xiang-editor verilog-vcd-parser xiang-parser vcd-parser-mt)
 target_include_directories(xiang-editor PUBLIC ${GTK3_INCLUDE_DIRS})
 target_link_libraries(xiang-editor verilog-vcd-parser xiang-parser vcd-parser-mt ${GTK3_LIBRARIES})
-
-
-
