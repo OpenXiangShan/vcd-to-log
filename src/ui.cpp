@@ -182,6 +182,19 @@ static void open_file(GtkMenuItem *item, gpointer data){
 }
 
 static void save_file(GtkMenuItem *item, gpointer data){
+    if(xiang_file){
+        gchar *contents;
+        GtkTextIter start, end;
+        gchar *path = g_file_get_path(xiang_file);
+        gtk_text_buffer_get_start_iter(buffer, &start);
+        gtk_text_buffer_get_end_iter(buffer, &end);
+        contents = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        g_file_set_contents(path, contents, -1, NULL);
+        g_free(path);
+    }
+}
+
+static void save_file_as(GtkMenuItem *item, gpointer data){
     GtkWidget *dialog;
     GtkFileChooser *chooser;
     dialog = gtk_file_chooser_dialog_new(
@@ -248,9 +261,12 @@ int main(int argc, char **argv){
     open_file_button = GTK_MENU_ITEM(gtk_builder_get_object(builder, "open_file"));
     GtkMenuItem *save_file_button;
     save_file_button = GTK_MENU_ITEM(gtk_builder_get_object(builder, "save_file"));
+    GtkMenuItem *save_as_button;
+    save_as_button = GTK_MENU_ITEM(gtk_builder_get_object(builder, "save_as"));
 
     g_signal_connect(open_file_button, "activate", G_CALLBACK(open_file), NULL);
     g_signal_connect(save_file_button, "activate", G_CALLBACK(save_file), NULL);
+    g_signal_connect(save_as_button, "activate", G_CALLBACK(save_file_as), NULL);
 
 
     search_bar = gtk_builder_get_object(builder, "searchbar");
