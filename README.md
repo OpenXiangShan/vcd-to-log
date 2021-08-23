@@ -12,7 +12,7 @@
 
 > cd build/src
 
-> ./xiang-editor <path-to-your-vcd-file>
+> ./xiang-editor path-to-your-vcd-file
 
 ## vcd-to-log
 
